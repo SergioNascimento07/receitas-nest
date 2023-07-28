@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ingredients {
+  name                String                @db.VarChar(130)
+  id                  String                @id
+  revenues_igredients revenues_igredients[]
+}
+
+model recipe_steps {
+  id          String   @id
+  description String   @db.VarChar(500)
+  step_number Int
+  revenue_id  String
+  revenues    revenues @relation(fields: [revenue_id], references: [id])
+
+  @@unique([step_number, revenue_id])
+}
+
+model revenues {
+  name                    String                @db.VarChar(200)
+  id                      String                @id
+  average_time            DateTime              @db.Time(6)
+  created_at              DateTime              @default(now())
+  difficulty              Difficulties
+  id_user                 String
+  image                   String?
+  revenue_type            String
+  visualizations_quantity BigInt                @default(0)
+  recipe_steps            recipe_steps[]
+  users                   users                 @relation(fields: [id_user], references: [id])
+  revenues_types          revenues_types        @relation(fields: [revenue_type], references: [id])
+  revenues_igredients     revenues_igredients[]
+  revenues_ratings        revenues_ratings[]
+}
+
+model revenues_igredients {
+  revenue_id    String
+  ingredient_id String
+  amount        String      @db.VarChar(70)
+  ingredients   ingredients @relation(fields: [ingredient_id], references: [id])
+  revenues      revenues    @relation(fields: [revenue_id], references: [id])
+
+  @@id([ingredient_id, revenue_id])
+}
+
+model revenues_ratings {
+  id         String   @id
+  revenue_id String
+  user_id    String
+  rating     rates
+  created_at DateTime @default(now())
+  revenues   revenues @relation(fields: [revenue_id], references: [id])
+  users      users    @relation(fields: [user_id], references: [id])
+}
+
+model revenues_types {
+  id       String     @id
+  name     String     @unique @db.VarChar(150)
+  revenues revenues[]
+}
+
+model users {
+  name             String
+  email            String             @unique
+  created_at       DateTime           @default(now())
+  id               String             @id
+  date_of_birth    DateTime           @db.Date
+  password         String             @db.VarChar(25)
+  revenues         revenues[]
+  revenues_ratings revenues_ratings[]
+}
+
+enum Difficulties {
+  easy
+  medium
+  hard
+}
+
+enum rates {
+  muito_ruim
+  ruim
+  medio
+  bom
+  muito_bom
+}
