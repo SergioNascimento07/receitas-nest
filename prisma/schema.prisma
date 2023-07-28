@@ -72,7 +72,7 @@ model users {
   created_at       DateTime           @default(now())
   id               String             @id @default(uuid())
   date_of_birth    DateTime           @db.Date
-  password         String             @db.VarChar(25)
+  password         String             @db.VarChar(200)
   revenues         revenues[]
   revenues_ratings revenues_ratings[]
 }
