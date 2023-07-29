@@ -1,7 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AuthenticateMiddleware } from './middlewares/authenticatedMiddleware';
+import { LoginUserDTO } from './dto/login-user.dto';
+import {Response} from 'express'
+import jsonwebtoken from 'jsonwebtoken';
 
 @Controller('user')
 export class UserController {
@@ -13,6 +17,7 @@ export class UserController {
     return response
   }
 
+  @UseGuards(AuthenticateMiddleware)
   @Get()
   async findAll() {
     const response = await this.userService.findAll();
@@ -32,5 +37,20 @@ export class UserController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.remove(id);
+  }
+
+  @Post('/login')
+  async login(@Body() loginUserDto: LoginUserDTO, @Res({ passthrough: true }) res: Response) {
+    const response = await this.userService.login(loginUserDto.email, loginUserDto.password)
+    if(response.token) {
+      console.log("Há cookies com token")
+      res.cookie('access_token', response.token, {
+        httpOnly: true,
+        // secure: false,
+        // sameSite: 'lax',
+        expires: new Date(Date.now() + 1 * 24 * 60 * 1000),
+    }).send(response);
+    }
+    return response
   }
 }

@@ -3,18 +3,19 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { prismaClient } from 'src/database/prismaClient';
 import {scryptSync} from "crypto"
+import {sign} from 'jsonwebtoken'
 
 @Injectable()
 export class UserService {
   async create(createUserDto: CreateUserDto) {
-    const passwordHash = scryptSync(createUserDto.password, process.env.CRYPTO_SAL, 64).toString('hex')
+    // const passwordHash = scryptSync(createUserDto.password, process.env.CRYPTO_SAL, 64).toString('hex')
 
     const newUser = await prismaClient.users.create({
       data: {
         name: createUserDto.name,
         email: createUserDto.email,
         date_of_birth: createUserDto.date_of_birth,
-        password: passwordHash
+        password: createUserDto.password
       }
     })
     return {object: newUser.email, message: "Usuário criado com sucesso"}
@@ -66,7 +67,19 @@ export class UserService {
     }
   }
 
-  async login(email: string, password: string): Promise<string> {
-    return ''
+  async login(email: string, password: string): Promise<any> {
+    const authenticated = await prismaClient.users.findFirst({
+      where: {
+        email: email,
+        password: password
+      }
+    })
+    if(authenticated) {
+        const tokenJwt = sign({
+          id: authenticated.id,
+        }, process.env.KEY_TOKEN)
+      return {object: authenticated, token: tokenJwt, message: "Usuário autenticado"}
+    }
+    return {object: null, token: null, message: "Usuário não autenticado"}
   }
 }
