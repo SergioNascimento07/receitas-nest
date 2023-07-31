@@ -67,14 +67,20 @@ model revenues_types {
 }
 
 model users {
-  name             String
+  name             String             
   email            String             @unique
   created_at       DateTime           @default(now())
   id               String             @id @default(uuid())
   date_of_birth    DateTime           @db.Date
   password         String             @db.VarChar(200)
+  role             roles              
   revenues         revenues[]
   revenues_ratings revenues_ratings[]
+}
+
+enum roles {
+  ADM
+  USER
 }
 
 enum Difficulties {

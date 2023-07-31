@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { AuthenticateMiddleware } from './middlewares/authenticatedMiddleware';
+import { AuthenticateUserMiddleware } from '../middlewares/authenticateUserMiddleware';
+import { AuthenticateAdmMiddleware } from '../middlewares/authenticateAdmMiddleware';
 
 @Module({
   controllers: [UserController],
-  providers: [UserService, AuthenticateMiddleware]
+  providers: [UserService, AuthenticateUserMiddleware, AuthenticateAdmMiddleware]
 })
 export class UserModule {}

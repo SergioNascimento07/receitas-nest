@@ -2,20 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { prismaClient } from 'src/database/prismaClient';
-import {scryptSync} from "crypto"
+import {scryptSync, timingSafeEqual} from "crypto"
 import {sign} from 'jsonwebtoken'
 
 @Injectable()
 export class UserService {
   async create(createUserDto: CreateUserDto) {
-    // const passwordHash = scryptSync(createUserDto.password, process.env.CRYPTO_SAL, 64).toString('hex')
+    const passwordHash = scryptSync(createUserDto.password, process.env.CRYPTO_SAL, 64).toString('hex')
 
     const newUser = await prismaClient.users.create({
       data: {
         name: createUserDto.name,
         email: createUserDto.email,
         date_of_birth: createUserDto.date_of_birth,
-        password: createUserDto.password
+        password: passwordHash,
+        role: 'USER'
       }
     })
     return {object: newUser.email, message: "Usuário criado com sucesso"}
@@ -68,18 +69,25 @@ export class UserService {
   }
 
   async login(email: string, password: string): Promise<any> {
-    const authenticated = await prismaClient.users.findFirst({
+
+    const user = await prismaClient.users.findFirst({
       where: {
-        email: email,
-        password: password
+        email: email
       }
     })
-    if(authenticated) {
+    if(user) {
+      const passwordHash = Buffer.from(user.password, 'hex')
+      const insertedPasswordHash = scryptSync(password, process.env.CRYPTO_SAL, 64)
+      const validate = timingSafeEqual(insertedPasswordHash, passwordHash)
+      if (validate) {
         const tokenJwt = sign({
-          id: authenticated.id,
+          id: user.id
         }, process.env.KEY_TOKEN)
-      return {object: authenticated, token: tokenJwt, message: "Usuário autenticado"}
+        return {object: user, token: tokenJwt, message: "Usuário autenticado"}
+      } else {
+        return {object: null, token: null, message: "Usuário ou senha incorretos"}
+      }
     }
-    return {object: null, token: null, message: "Usuário não autenticado"}
+    return {object: null, token: null, message: "Usuário ou senha incorretos"}
   }
 }
