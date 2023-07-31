@@ -45,10 +45,11 @@ export class UserController {
   @Post('/login')
   async login(@Body() loginUserDto: LoginUserDTO, @Res({ passthrough: true }) res: Response) {
     const response = await this.userService.login(loginUserDto.email, loginUserDto.password)
-    if(response.token) {
-      console.log("Há cookies com token")
-      
-      res.cookie('access_token', response.token, {
+    if(response.accessToken) {
+      console.log(response.refreshToken)
+      console.log(response.accessToken)
+
+      res.cookie('access_token', response.accessToken, {
         httpOnly: true,
         // secure: false,
         // sameSite: 'lax',

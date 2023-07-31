@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { prismaClient } from 'src/database/prismaClient';
-import {scryptSync, timingSafeEqual} from "crypto"
+import {scryptSync, timingSafeEqual, randomBytes} from "crypto"
 import {sign} from 'jsonwebtoken'
+import moment from 'moment';
 
 @Injectable()
 export class UserService {
@@ -80,14 +81,22 @@ export class UserService {
       const insertedPasswordHash = scryptSync(password, process.env.CRYPTO_SAL, 64)
       const validate = timingSafeEqual(insertedPasswordHash, passwordHash)
       if (validate) {
-        const tokenJwt = sign({
+        const refreshToken = this.createOpaqueToken(user)
+        const accessToken = sign({
           id: user.id
-        }, process.env.KEY_TOKEN)
-        return {object: user, token: tokenJwt, message: "Usuário autenticado"}
+        }, process.env.KEY_TOKEN, {})
+        return {object: user, accessToken: accessToken, refreshToken: refreshToken, message: "Usuário autenticado"}
       } else {
         return {object: null, token: null, message: "Usuário ou senha incorretos"}
       }
     }
     return {object: null, token: null, message: "Usuário ou senha incorretos"}
+  }
+
+  private createOpaqueToken(user: any) {
+    const opaqueToken = randomBytes(24).toString('hex')
+    //data que o token vai expirar
+    const expirationDate = moment().add(5, 'd').unix()
+    return opaqueToken
   }
 }
