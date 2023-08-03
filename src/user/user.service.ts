@@ -5,6 +5,7 @@ import { prismaClient } from 'src/database/prismaClient';
 import {scryptSync, timingSafeEqual, randomBytes} from "crypto"
 import {sign} from 'jsonwebtoken'
 import moment from 'moment';
+import allowlist from 'redis/allowlist';
 
 @Injectable()
 export class UserService {
@@ -81,7 +82,7 @@ export class UserService {
       const insertedPasswordHash = scryptSync(password, process.env.CRYPTO_SAL, 64)
       const validate = timingSafeEqual(insertedPasswordHash, passwordHash)
       if (validate) {
-        const refreshToken = this.createOpaqueToken(user)
+        const refreshToken = await this.createOpaqueToken(user)
         const accessToken = sign({
           id: user.id
         }, process.env.KEY_TOKEN, {})
@@ -93,10 +94,11 @@ export class UserService {
     return {object: null, token: null, message: "Usuário ou senha incorretos"}
   }
 
-  private createOpaqueToken(user: any) {
-    const opaqueToken = randomBytes(24).toString('hex')
+  private async createOpaqueToken(user: any) {
+    const opaqueToken = randomBytes(24).toString('hex');
     //data que o token vai expirar
-    const expirationDate = moment().add(5, 'd').unix()
+    // const expirationDate = moment().add(5, 'd').unix();
+    (await allowlist).add("refresh-token:"+opaqueToken, user.id, 10000000)
     return opaqueToken
   }
 }

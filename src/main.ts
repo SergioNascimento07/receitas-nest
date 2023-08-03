@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { useContainer } from 'class-validator';
+import '../redis/allowlist'
+import '../redis/blocklist'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
