@@ -15,13 +15,16 @@ const blocklist = createClient();
 
 const handleBlocklist =  handleList(blocklist)
 
-// function createTokenHash(token) {
+// function createTokenHash(token: string) {
 //     return createHash('sha256').update(token).digest('hex')
 // }
 
-// export default {
-//     async add(token: string) {
-//         const expirationDate = decode(token)
-//         const tokenHash = createTokenHash(token)
-//     }
-// }
+export default {
+    async add(token: string, expiration: number|string) {
+        return (await handleBlocklist).add("blocklist-acces-token:"+token, '', expiration)
+    },
+
+    async containsToken(token: string) {
+        return (await handleBlocklist).containsKey(token)
+    }
+}

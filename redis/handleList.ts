@@ -2,7 +2,7 @@ import redis, { RedisClientType } from 'redis'
 
 export default async(lista: any)=> {
     return {
-        async add(key: string, value: string, expirationDate: number){
+        async add(key: string, value: string, expirationDate: number|string){
             await lista.set(key, value, {EX: expirationDate})
         },
 

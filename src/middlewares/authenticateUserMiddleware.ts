@@ -1,6 +1,8 @@
 import { Injectable, CanActivate, ExecutionContext} from '@nestjs/common';
 import { verify } from 'jsonwebtoken';
+import blocklist from 'redis/blocklist';
 import { prismaClient } from 'src/database/prismaClient';
+
 
 @Injectable()
 export class AuthenticateUserMiddleware implements CanActivate {
@@ -13,6 +15,10 @@ export class AuthenticateUserMiddleware implements CanActivate {
         const finalToken = tokenBruto[0].split('=')[1]
         const chekedToken = verify(finalToken, process.env.KEY_TOKEN)
         if(chekedToken) {
+          const blockedToken = await blocklist.containsToken(finalToken)
+          if (blockedToken) {
+            return false
+          }
           const chekedToken2 = chekedToken as {id: string, iat: number}
           const user = await prismaClient.users.findUnique({
             where: {

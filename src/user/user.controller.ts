@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -7,6 +7,8 @@ import { LoginUserDTO } from './dto/login-user.dto';
 import {Response} from 'express'
 import jsonwebtoken from 'jsonwebtoken';
 import { AuthenticateAdmMiddleware } from 'src/middlewares/authenticateAdmMiddleware';
+import {Request} from 'express'
+import { LogoutUserDTO } from './dto/logout-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -36,11 +38,11 @@ export class UserController {
     return this.userService.update(id, updateUserDto);
   }
 
-  @UseGuards(AuthenticateUserMiddleware)
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(id);
-  }
+  // @UseGuards(AuthenticateUserMiddleware)
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.userService.remove(id);
+  // }
 
   @Post('/login')
   async login(@Body() loginUserDto: LoginUserDTO, @Res({ passthrough: true }) res: Response) {
@@ -53,9 +55,16 @@ export class UserController {
         httpOnly: true,
         // secure: false,
         // sameSite: 'lax',
-        expires: new Date(Date.now() + 1 * 24 * 60 * 1000),
-    }).send(response);
+        expires: new Date(Date.now() + 1 * 24 * 60 * 640),
+      }).send(response);
     }
     return response
   }
+
+  // @Delete('/logout')
+  // async logout(@Body() logoutDTO: LogoutUserDTO,@Req() req: Request) {
+  //   const qqq = req.headers.cookie
+  //   const tokenInvalidado = await this.userService.logout(logoutDTO.token, qqq)
+  //   return tokenInvalidado
+  // }
 }

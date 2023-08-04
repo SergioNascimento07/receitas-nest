@@ -6,6 +6,7 @@ import {scryptSync, timingSafeEqual, randomBytes} from "crypto"
 import {sign} from 'jsonwebtoken'
 import moment from 'moment';
 import allowlist from 'redis/allowlist';
+import blocklist from 'redis/blocklist';
 
 @Injectable()
 export class UserService {
@@ -85,7 +86,7 @@ export class UserService {
         const refreshToken = await this.createOpaqueToken(user)
         const accessToken = sign({
           id: user.id
-        }, process.env.KEY_TOKEN, {})
+        }, process.env.KEY_TOKEN, {expiresIn: "15m"})
         return {object: user, accessToken: accessToken, refreshToken: refreshToken, message: "Usuário autenticado"}
       } else {
         return {object: null, token: null, message: "Usuário ou senha incorretos"}
@@ -98,7 +99,17 @@ export class UserService {
     const opaqueToken = randomBytes(24).toString('hex');
     //data que o token vai expirar
     // const expirationDate = moment().add(5, 'd').unix();
-    (await allowlist).add("refresh-token:"+opaqueToken, user.id, 10000000)
+    (await allowlist).add("refresh-token:"+opaqueToken, user.id, 1000000)
     return opaqueToken
   }
+
+  // async logout(refreshToken: string, accessToken: string) {
+  //   const existsRefreshToken = (await allowlist).containsKey(refreshToken)
+  //   if (existsRefreshToken) {
+  //     (await allowlist).delete(refreshToken)
+  //     blocklist.add(accessToken, "15m")
+  //     return {object: refreshToken, message: "O logout foi realizado com sucesso, e esse refresh token foi inválidado"}
+  //   }
+  //   return {object: null, message: "Token já inválido"}
+  // }
 }
